@@ -74,5 +74,11 @@ private:
   unsigned int constrained_success_;
   unsigned int constrained_failure_;
   double inv_dim_;
+ 
+  // GMM model variables
+  Eigen::MatrixXf gmm_X;
+  std::vector<Eigen::VectorXf> gmm_means;
+  std::vector<float> gmm_weights;
+  std::vector<Eigen::MatrixXf> gmm_covariances;
 };
 }  // namespace ompl_interface

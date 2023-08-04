@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   pluginlib
   tf2
   dynamic_reconfigure
+  rosbag
 )
 moveit_build_options()
 

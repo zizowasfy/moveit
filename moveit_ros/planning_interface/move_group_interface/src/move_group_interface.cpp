@@ -1888,6 +1888,9 @@ bool MoveGroupInterface::setPoseTarget(const Eigen::Isometry3d& pose, const std:
 
 bool MoveGroupInterface::setPoseTarget(const geometry_msgs::Pose& target, const std::string& end_effector_link)
 {
+  std::cout << "HEEEEEY IAM IN setPoseTarget() ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
+  impl_->setTargetType(POSE);
+
   std::vector<geometry_msgs::PoseStamped> pose_msg(1);
   pose_msg[0].pose = target;
   pose_msg[0].header.frame_id = getPoseReferenceFrame();

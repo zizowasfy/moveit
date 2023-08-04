@@ -44,6 +44,7 @@
 
 #include <ompl/geometric/planners/AnytimePathShortening.h>
 #include <ompl/geometric/planners/rrt/RRT.h>
+#include <ompl/geometric/planners/rrt/GMRRRT.h>
 #include <ompl/geometric/planners/rrt/pRRT.h>
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 #include <ompl/geometric/planners/rrt/TRRT.h>
@@ -292,6 +293,7 @@ void ompl_interface::PlanningContextManager::registerDefaultPlanners()
   registerPlannerAllocatorHelper<og::PRMstar>("geometric::PRMstar");
   registerPlannerAllocatorHelper<og::ProjEST>("geometric::ProjEST");
   registerPlannerAllocatorHelper<og::RRT>("geometric::RRT");
+    registerPlannerAllocatorHelper<og::GMRRRT>("geometric::GMRRRT");
   registerPlannerAllocatorHelper<og::RRTConnect>("geometric::RRTConnect");
   registerPlannerAllocatorHelper<og::RRTstar>("geometric::RRTstar");
   registerPlannerAllocatorHelper<og::SBL>("geometric::SBL");

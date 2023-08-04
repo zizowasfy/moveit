@@ -38,6 +38,10 @@
 #include <moveit/ompl_interface/model_based_planning_context.h>
 #include <moveit/profiler/profiler.h>
 
+#include <ompl/base/spaces/SE3StateSpace.h>
+#include "/home/zizo/haptics-ctrl_ws/src/gmm_gmr/include/doRegression.h"
+
+
 #include <utility>
 
 ompl_interface::ConstrainedSampler::ConstrainedSampler(const ModelBasedPlanningContext* pc,
@@ -51,6 +55,12 @@ ompl_interface::ConstrainedSampler::ConstrainedSampler(const ModelBasedPlanningC
   , constrained_failure_(0)
 {
   inv_dim_ = space_->getDimension() > 0 ? 1.0 / (double)space_->getDimension() : 1.0;
+
+  std::cout << "State Dimension (ConstrainedSampler): " << space_->getDimension() << std::endl;
+  std::cout << "StateSpace Name (ConstrainedSampler): " << space_->getName() << std::endl;    
+  std::cout << "StateSpace Type (ConstrainedSampler): " << space_->getType() << std::endl;
+
+  getGMMfromBag(gmm_X, gmm_means, gmm_weights, gmm_covariances);
 }
 
 double ompl_interface::ConstrainedSampler::getConstrainedSamplingRate() const
@@ -63,11 +73,33 @@ double ompl_interface::ConstrainedSampler::getConstrainedSamplingRate() const
 
 bool ompl_interface::ConstrainedSampler::sampleC(ob::State* state)
 {
+  std::cout << "ConstrainedSampler sampleC()" << std::endl;
   //  moveit::Profiler::ScopedBlock sblock("sampleWithConstraints");
 
-  if (constraint_sampler_->sample(work_state_, planning_context_->getCompleteInitialRobotState(),
+  if (constraint_sampler_->sample(work_state_, planning_context_->getCompleteInitialRobotState(), //Produces an IK sample - Zizo added this comment
                                   planning_context_->getMaximumStateSamplingAttempts()))
   {
+    std::cout << "state.position.x(before): " << 
+      state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0] << std::endl;
+    std::cout << "state.position.y(before): " << 
+      state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1] << std::endl;
+    std::cout << "state.position.z(before): " << 
+      state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2] << std::endl;
+
+    ompl::RNG rnd_input;
+    std::vector<float> prestate = doRegression(rnd_input.uniformReal(0.0, 0.6), gmm_X, gmm_means, gmm_weights, gmm_covariances);
+    
+    state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0] = prestate[0];
+    state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1] = prestate[1];
+    state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2] = prestate[2];
+
+    std::cout << "state.position.x: " << 
+        state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0] << std::endl;
+    std::cout << "state.position.y: " << 
+        state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1] << std::endl;
+    std::cout << "state.position.z: " << 
+        state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2] << std::endl;
+            
     planning_context_->getOMPLStateSpace()->copyToOMPLState(state, work_state_);
     if (space_->satisfiesBounds(state))
     {
@@ -81,6 +113,7 @@ bool ompl_interface::ConstrainedSampler::sampleC(ob::State* state)
 
 void ompl_interface::ConstrainedSampler::sampleUniform(ob::State* state)
 {
+  std::cout << "ConstrainedSampler sampleUniform()" << std::endl;
   if (!sampleC(state) && !sampleC(state) && !sampleC(state))
     default_->sampleUniform(state);
 }
@@ -88,6 +121,7 @@ void ompl_interface::ConstrainedSampler::sampleUniform(ob::State* state)
 void ompl_interface::ConstrainedSampler::sampleUniformNear(ob::State* state, const ob::State* near,
                                                            const double distance)
 {
+  std::cout << "ConstrainedSampler sampleUniformNear()" << std::endl;
   if (sampleC(state) || sampleC(state) || sampleC(state))
   {
     double total_d = space_->distance(state, near);
@@ -103,6 +137,7 @@ void ompl_interface::ConstrainedSampler::sampleUniformNear(ob::State* state, con
 
 void ompl_interface::ConstrainedSampler::sampleGaussian(ob::State* state, const ob::State* mean, const double stdDev)
 {
+  std::cout << "ConstrainedSampler sampleGaussian()" << std::endl;
   if (sampleC(state) || sampleC(state) || sampleC(state))
   {
     double total_d = space_->distance(state, mean);

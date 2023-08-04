@@ -44,6 +44,13 @@
 #include <ompl/tools/benchmark/Benchmark.h>
 #include <ompl/tools/multiplan/ParallelPlan.h>
 #include <ompl/base/StateStorage.h>
+// Added by Zizo
+// #include <gaussian_mixture_model/DoRegression.h>
+#include <rosbag/bag.h>
+#include <rosbag/view.h>
+#include <gaussian_mixture_model/Gaussian.h>
+#include <gaussian_mixture_model/GaussianMixture.h>
+#include <Eigen/Dense>
 
 namespace ompl_interface
 {
@@ -328,6 +335,8 @@ public:
    * */
   virtual void configure(const ros::NodeHandle& nh, bool use_constraints_approximations);
 
+  ros::ServiceClient doRegression_client;
+
 protected:
   void preSolve();
   void postSolve();
@@ -337,6 +346,8 @@ protected:
 
   virtual ob::ProjectionEvaluatorPtr getProjectionEvaluator(const std::string& peval) const;
   virtual ob::StateSamplerPtr allocPathConstrainedSampler(const ompl::base::StateSpace* ss) const;
+  virtual ob::ValidStateSamplerPtr allocGaussianSampler(const ompl::base::SpaceInformation* si) const;
+
   virtual void useConfig();
   virtual ob::GoalPtr constructGoal();
 
