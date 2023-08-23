@@ -40,6 +40,7 @@
 
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include "/home/zizo/haptics-ctrl_ws/src/gmm_gmr/include/doRegression.h"
+// #include </home/zizo/haptics-ctrl_ws/src/gmm_gmr/src/gmm_node.cpp>
 
 
 #include <utility>
@@ -99,7 +100,15 @@ bool ompl_interface::ConstrainedSampler::sampleC(ob::State* state)
         state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1] << std::endl;
     std::cout << "state.position.z: " << 
         state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2] << std::endl;
-            
+
+    // saveSamples({state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0], 
+    //               state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1], 
+    //               state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2]});
+    std::vector<double> state_vec = {state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0],
+                                    state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1],
+                                    state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2]};
+    saveSamples(state_vec);
+
     planning_context_->getOMPLStateSpace()->copyToOMPLState(state, work_state_);
     if (space_->satisfiesBounds(state))
     {
