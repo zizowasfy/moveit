@@ -101,9 +101,6 @@ bool ompl_interface::ConstrainedSampler::sampleC(ob::State* state)
     std::cout << "state.position.z: " << 
         state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2] << std::endl;
 
-    // saveSamples({state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0], 
-    //               state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1], 
-    //               state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2]});
     std::vector<double> state_vec = {state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0],
                                     state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1],
                                     state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2]};
