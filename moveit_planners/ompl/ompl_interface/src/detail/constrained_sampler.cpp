@@ -80,30 +80,39 @@ bool ompl_interface::ConstrainedSampler::sampleC(ob::State* state)
   if (constraint_sampler_->sample(work_state_, planning_context_->getCompleteInitialRobotState(), //Produces an IK sample - Zizo added this comment
                                   planning_context_->getMaximumStateSamplingAttempts()))
   {
-    std::cout << "state.position.x(before): " << 
-      state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0] << std::endl;
-    std::cout << "state.position.y(before): " << 
-      state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1] << std::endl;
-    std::cout << "state.position.z(before): " << 
-      state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2] << std::endl;
+    // std::cout << "state.position.x(before): " << 
+    //   state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0] << std::endl;
+    // std::cout << "state.position.y(before): " << 
+    //   state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1] << std::endl;
+    // std::cout << "state.position.z(before): " << 
+    //   state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2] << std::endl;
+    // std::cout <<  state->as<ompl::base::RealVectorStateSpace::StateType>()->values[3] << std::endl;
+    // std::cout <<  state->as<ompl::base::RealVectorStateSpace::StateType>()->values[4] << std::endl;
+    // std::cout <<  state->as<ompl::base::RealVectorStateSpace::StateType>()->values[5] << std::endl;
+    // std::cout <<  state->as<ompl::base::RealVectorStateSpace::StateType>()->values[6] << std::endl;
 
-    ompl::RNG rnd_input;
-    std::vector<float> prestate = doRegression(rnd_input.uniformReal(0.0, 0.6), gmm_X, gmm_means, gmm_weights, gmm_covariances);
-    
-    state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0] = prestate[0];
-    state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1] = prestate[1];
-    state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2] = prestate[2];
+    // ompl::RNG rnd_input;
+    // // std::vector<float> prestate = doRegression(rnd_input.uniformReal(0.0, 0.6), gmm_X, gmm_means, gmm_weights, gmm_covariances);
+    // std::vector<float> prestate = doRegression(rnd_input.uniformInt(0, 1008), gmm_X, gmm_means, gmm_weights, gmm_covariances);
 
-    std::cout << "state.position.x: " << 
-        state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0] << std::endl;
-    std::cout << "state.position.y: " << 
-        state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1] << std::endl;
-    std::cout << "state.position.z: " << 
-        state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2] << std::endl;
+    // state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0] = prestate[0];
+    // state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1] = prestate[1];
+    // state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2] = prestate[2];
+
+    // std::cout << "state.position.x: " << 
+    //     state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0] << std::endl;
+    // std::cout << "state.position.y: " << 
+    //     state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1] << std::endl;
+    // std::cout << "state.position.z: " << 
+    //     state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2] << std::endl;
 
     std::vector<double> state_vec = {state->as<ompl::base::RealVectorStateSpace::StateType>()->values[0],
-                                    state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1],
-                                    state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2]};
+                                     state->as<ompl::base::RealVectorStateSpace::StateType>()->values[1],
+                                     state->as<ompl::base::RealVectorStateSpace::StateType>()->values[2],
+                                     state->as<ompl::base::RealVectorStateSpace::StateType>()->values[3],
+                                     state->as<ompl::base::RealVectorStateSpace::StateType>()->values[4],
+                                     state->as<ompl::base::RealVectorStateSpace::StateType>()->values[5],
+                                     state->as<ompl::base::RealVectorStateSpace::StateType>()->values[6]};
     saveSamples(state_vec);
 
     planning_context_->getOMPLStateSpace()->copyToOMPLState(state, work_state_);

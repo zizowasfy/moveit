@@ -159,6 +159,7 @@ void ompl_interface::PoseModelStateSpace::interpolate(const ompl::base::State* f
   // so we recompute IK if needed
   if (computeStateIK(state))
   {
+    std::cout << "interpolate" << std::endl;
     double dj = jump_factor_ * ModelBasedStateSpace::distance(from, to);
     double d_from = ModelBasedStateSpace::distance(from, state);
     double d_to = ModelBasedStateSpace::distance(state, to);
@@ -244,6 +245,9 @@ bool ompl_interface::PoseModelStateSpace::PoseComponent::computeStateIK(StateTyp
   pose.orientation.y = so3_state.y;
   pose.orientation.z = so3_state.z;
   pose.orientation.w = so3_state.w;
+  // std::cout << "x (PoseModelStateSpace)" << pose.position.x << std::endl;
+  // std::cout << "y (PoseModelStateSpace)" << pose.position.y << std::endl;
+  // std::cout << "z (PoseModelStateSpace)" << pose.position.z << std::endl;
 
   // run IK
   std::vector<double> solution(bijection_.size());
@@ -286,6 +290,7 @@ bool ompl_interface::PoseModelStateSpace::computeStateIK(ompl::base::State* stat
       state->as<StateType>()->markInvalid();
       return false;
     }
+  // std::cout << "poses_.size(): " << poses_.size() << std::endl;
   state->as<StateType>()->setJointsComputed(true);
   return true;
 }
@@ -310,22 +315,29 @@ ompl::base::StateSamplerPtr ompl_interface::PoseModelStateSpace::allocDefaultSta
     PoseModelStateSampler(const ompl::base::StateSpace* space, ompl::base::StateSamplerPtr sampler)
       : ompl::base::StateSampler(space), sampler_(std::move(sampler))
     {
+      std::cout << "PoseModelStateSampler()" << std::endl;
+      std::cout << "State Dimension (PoseModelStateSampler): " << space_->getDimension() << std::endl;
+      std::cout << "StateSpace Name (PoseModelStateSampler): " << space_->getName() << std::endl;    
+      std::cout << "StateSpace Type (PoseModelStateSampler): " << space_->getType() << std::endl;      
     }
 
     void sampleUniform(ompl::base::State* state) override
     {
+      std::cout << "*************SampleUniform (PoseModelStateSampler)" << std::endl;
       sampler_->sampleUniform(state);
       afterStateSample(state);
     }
 
     void sampleUniformNear(ompl::base::State* state, const ompl::base::State* near, const double distance) override
     {
+      std::cout << "*************sampleUniformNear (PoseModelStateSampler)" << std::endl;      
       sampler_->sampleUniformNear(state, near, distance);
       afterStateSample(state);
     }
 
     void sampleGaussian(ompl::base::State* state, const ompl::base::State* mean, const double stdDev) override
     {
+      std::cout << "*************sampleGaussian (PoseModelStateSampler)" << std::endl;            
       sampler_->sampleGaussian(state, mean, stdDev);
       afterStateSample(state);
     }
@@ -333,6 +345,8 @@ ompl::base::StateSamplerPtr ompl_interface::PoseModelStateSpace::allocDefaultSta
   protected:
     void afterStateSample(ompl::base::State* sample) const
     {
+      std::cout << "*************afterStateSample (PoseModelStateSampler)" << std::endl;
+
       sample->as<StateType>()->setJointsComputed(true);
       sample->as<StateType>()->setPoseComputed(false);
       space_->as<PoseModelStateSpace>()->computeStateFK(sample);
