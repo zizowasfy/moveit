@@ -346,8 +346,9 @@ protected:
 
   virtual ob::ProjectionEvaluatorPtr getProjectionEvaluator(const std::string& peval) const;
   virtual ob::StateSamplerPtr allocPathConstrainedSampler(const ompl::base::StateSpace* ss) const;
-  virtual ob::ValidStateSamplerPtr allocGaussianSampler(const ompl::base::SpaceInformation* si) const;
-
+  // virtual ob::ValidStateSamplerPtr allocGaussianSampler(const ompl::base::SpaceInformation* si) const;
+  virtual ob::ValidStateSamplerPtr allocValidGMMSampler(const ompl::base::SpaceInformation* si) const;
+  
   virtual void useConfig();
   virtual ob::GoalPtr constructGoal();
 
