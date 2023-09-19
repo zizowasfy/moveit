@@ -52,7 +52,8 @@
 #include <ompl/config.h>
 #include <ompl/base/samplers/UniformValidStateSampler.h>
 #include <ompl/base/samplers/GaussianValidStateSampler.h>
-#include <ompl/base/samplers/GMRValidStateSampler.h>
+// #include <ompl/base/samplers/GMRValidStateSampler.h>
+#include <ompl/base/samplers/GMMValidStateSampler.h>
 #include <ompl/base/goals/GoalLazySamples.h>
 #include <ompl/tools/config/SelfConfig.h>
 #include <ompl/base/spaces/SE3StateSpace.h>
@@ -118,10 +119,12 @@ void ompl_interface::ModelBasedPlanningContext::configure(const ros::NodeHandle&
 
   complete_initial_robot_state_.update();
   ompl_simple_setup_->getStateSpace()->computeSignature(space_signature_);
-  ompl_simple_setup_->getStateSpace()->setStateSamplerAllocator(
-      [this](const ompl::base::StateSpace* ss) { return allocPathConstrainedSampler(ss); });
+  // ompl_simple_setup_->getStateSpace()->setStateSamplerAllocator(
+  //     [this](const ompl::base::StateSpace* ss) { return allocPathConstrainedSampler(ss); });
     // ompl_simple_setup_->getSpaceInformation()->setValidStateSamplerAllocator(
     //   [this](const ompl::base::SpaceInformation* si){ return allocGaussianSampler(si); });
+    ompl_simple_setup_->getSpaceInformation()->setValidStateSamplerAllocator(
+      [this](const ompl::base::SpaceInformation* si){ return allocValidGMMSampler(si); });
 
   // convert the input state to the corresponding OMPL state
   ompl::base::ScopedState<> ompl_start_state(spec_.state_space_);
@@ -210,76 +213,81 @@ ompl_interface::ModelBasedPlanningContext::getProjectionEvaluator(const std::str
   return ob::ProjectionEvaluatorPtr();
 }
 
+// ompl::base::ValidStateSamplerPtr
+// ompl_interface::ModelBasedPlanningContext::allocGaussianSampler(const ompl::base::SpaceInformation* si) const
+// {
+//   // Getting the GMM from the .bag file
+//   rosbag::Bag rbag;
+//   rbag.open("/home/zizo/Disassembly Teleop/LL/Rcover/gmm-gmr/gmm_mix_action2.bag");
+
+//   // Initializing Variables
+//   Eigen::MatrixXf GMM_X;
+//   std::vector<Eigen::VectorXf> GMM_means;
+//   std::vector<Eigen::MatrixXf> GMM_covariances;
+//   std::vector<float> GMM_weights;
+
+//   for(rosbag::MessageInstance const m: rosbag::View(rbag))
+//   {
+//     gaussian_mixture_model::GaussianMixture::ConstPtr i = m.instantiate<gaussian_mixture_model::GaussianMixture>();
+//     if (i != nullptr)
+//     {
+//       int GMM_dim = sizeof(i->gaussians[0].means)/3; // 3 cause it seems the size of float32 is 3 bytes instead of 4 bytes!!
+//       ROS_INFO("GMM Dimension: %d", GMM_dim);
+
+//       // Read GaussianMixutre msg and convert it to a format that doRegression(....) accepts
+//       GMM_X = Eigen::MatrixXf::Identity(1,GMM_dim); // Not really necessary, it's just only to abide by doRegression(....) format
+//       GMM_means.clear();
+//       GMM_covariances.clear();
+//       Eigen::VectorXf G_means(GMM_dim);
+//       Eigen::MatrixXf G_covariances(GMM_dim, GMM_dim);      
+//       GMM_weights = i->weights;
+//       for (gaussian_mixture_model::Gaussian gaussian : i->gaussians)
+//       {
+//         // Eigen::VectorXf G_means(GMM_dim);
+//         // Eigen::MatrixXf G_covariances(GMM_dim, GMM_dim);
+//         int i = 0;
+//         for (int d = 0; d < GMM_dim; d++)
+//         {
+//           G_means(d) = gaussian.means[d];
+
+//           for (int c = 0; c < GMM_dim; c++)
+//           {
+//             G_covariances(d,c) = gaussian.covariances[i]; //[c+i]
+//           }
+//           i++; //=+ GMM_dim; // To make sure that each row from gaussian.coavariances is placed correctly in G_covariances
+//         }
+//         GMM_means.push_back(G_means);
+//         GMM_covariances.push_back(G_covariances);
+//       }
+//     }
+//   }
+//   rbag.close();
+
+//   //Debugging
+//   std::cout << "Debugging parameters from .bag file" << std::endl;
+//   // for (float w : GMM_weights) {std::cout << w << " ";}
+
+//   // for (Eigen::VectorXf gaussian : GMM_means)
+//   // {
+//   //   std::cout << gaussian << std::endl;
+//   //   // for (float mean : gaussian)
+//   //   // {
+//   //   //   std::cout << mean << " ";GMRValidStateSampler
+//   //   // std::endl;
+//   // }
+//   // std::cout << "-------" << std::endl;
+//   //\Debugging
+
+//   // std::cout << "StateSpace Name: " << si->getStateSpace()->getType() << std::endl;
+
+//   // return std::make_shared<ompl::base::GaussianValidStateSampler>(si);
+//   return std::make_shared<ompl::base::GMRValidStateSampler>(si, GMM_X, GMM_means, GMM_weights, GMM_covariances);
+// }
+
 ompl::base::ValidStateSamplerPtr
-ompl_interface::ModelBasedPlanningContext::allocGaussianSampler(const ompl::base::SpaceInformation* si) const
+ompl_interface::ModelBasedPlanningContext::allocValidGMMSampler(const ompl::base::SpaceInformation* si) const
 {
-  // Getting the GMM from the .bag file
-  rosbag::Bag rbag;
-  rbag.open("/home/zizo/Disassembly Teleop/LL/Rcover/gmm-gmr/gmm_mix_action2.bag");
-
-  // Initializing Variables
-  Eigen::MatrixXf GMM_X;
-  std::vector<Eigen::VectorXf> GMM_means;
-  std::vector<Eigen::MatrixXf> GMM_covariances;
-  std::vector<float> GMM_weights;
-
-  for(rosbag::MessageInstance const m: rosbag::View(rbag))
-  {
-    gaussian_mixture_model::GaussianMixture::ConstPtr i = m.instantiate<gaussian_mixture_model::GaussianMixture>();
-    if (i != nullptr)
-    {
-      int GMM_dim = sizeof(i->gaussians[0].means)/3; // 3 cause it seems the size of float32 is 3 bytes instead of 4 bytes!!
-      ROS_INFO("GMM Dimension: %d", GMM_dim);
-
-      // Read GaussianMixutre msg and convert it to a format that doRegression(....) accepts
-      GMM_X = Eigen::MatrixXf::Identity(1,GMM_dim); // Not really necessary, it's just only to abide by doRegression(....) format
-      GMM_means.clear();
-      GMM_covariances.clear();
-      Eigen::VectorXf G_means(GMM_dim);
-      Eigen::MatrixXf G_covariances(GMM_dim, GMM_dim);      
-      GMM_weights = i->weights;
-      for (gaussian_mixture_model::Gaussian gaussian : i->gaussians)
-      {
-        // Eigen::VectorXf G_means(GMM_dim);
-        // Eigen::MatrixXf G_covariances(GMM_dim, GMM_dim);
-        int i = 0;
-        for (int d = 0; d < GMM_dim; d++)
-        {
-          G_means(d) = gaussian.means[d];
-
-          for (int c = 0; c < GMM_dim; c++)
-          {
-            G_covariances(d,c) = gaussian.covariances[i]; //[c+i]
-          }
-          i++; //=+ GMM_dim; // To make sure that each row from gaussian.coavariances is placed correctly in G_covariances
-        }
-        GMM_means.push_back(G_means);
-        GMM_covariances.push_back(G_covariances);
-      }
-    }
-  }
-  rbag.close();
-
-  //Debugging
-  std::cout << "Debugging parameters from .bag file" << std::endl;
-  // for (float w : GMM_weights) {std::cout << w << " ";}
-
-  // for (Eigen::VectorXf gaussian : GMM_means)
-  // {
-  //   std::cout << gaussian << std::endl;
-  //   // for (float mean : gaussian)
-  //   // {
-  //   //   std::cout << mean << " ";
-  //   // }
-  //   // std::endl;
-  // }
-  // std::cout << "-------" << std::endl;
-  //\Debugging
-
-  // std::cout << "StateSpace Name: " << si->getStateSpace()->getType() << std::endl;
-
-  // return std::make_shared<ompl::base::GaussianValidStateSampler>(si);
-  return std::make_shared<ompl::base::GMRValidStateSampler>(si, GMM_X, GMM_means, GMM_weights, GMM_covariances);
+  return std::make_shared<ompl::base::GMMValidStateSampler>(si);
 }
 
 ompl::base::StateSamplerPtr
