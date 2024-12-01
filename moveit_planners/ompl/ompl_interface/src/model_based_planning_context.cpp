@@ -119,12 +119,12 @@ void ompl_interface::ModelBasedPlanningContext::configure(const ros::NodeHandle&
 
   complete_initial_robot_state_.update();
   ompl_simple_setup_->getStateSpace()->computeSignature(space_signature_);
-  // ompl_simple_setup_->getStateSpace()->setStateSamplerAllocator(
-  //     [this](const ompl::base::StateSpace* ss) { return allocPathConstrainedSampler(ss); });
+  ompl_simple_setup_->getStateSpace()->setStateSamplerAllocator(
+      [this](const ompl::base::StateSpace* ss) { return allocPathConstrainedSampler(ss); });
     // ompl_simple_setup_->getSpaceInformation()->setValidStateSamplerAllocator(
     //   [this](const ompl::base::SpaceInformation* si){ return allocGaussianSampler(si); });
-    ompl_simple_setup_->getSpaceInformation()->setValidStateSamplerAllocator(
-      [this](const ompl::base::SpaceInformation* si){ return allocValidGMMSampler(si); });
+    // ompl_simple_setup_->getSpaceInformation()->setValidStateSamplerAllocator(
+    //   [this](const ompl::base::SpaceInformation* si){ return allocValidGMMSampler(si); });
 
   // convert the input state to the corresponding OMPL state
   ompl::base::ScopedState<> ompl_start_state(spec_.state_space_);

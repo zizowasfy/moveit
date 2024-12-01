@@ -39,8 +39,8 @@
 #include <moveit/profiler/profiler.h>
 
 #include <ompl/base/spaces/SE3StateSpace.h>
-#include "/home/zizo/haptics-ctrl_ws/src/gmm_gmr/include/doRegression.h"
-// #include </home/zizo/haptics-ctrl_ws/src/gmm_gmr/src/gmm_node.cpp>
+#include "/home/zizo/tpgmm_rrt_ws/src/batteryDis-LfD/gmm_gmr/include/doRegression.h"
+// #include </home/zizo/tpgmm_rrt_ws/src/batteryDis-LfD/gmm_gmr/src/gmm_node.cpp>
 
 
 #include <utility>
