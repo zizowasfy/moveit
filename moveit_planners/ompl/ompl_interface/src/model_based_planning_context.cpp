@@ -120,11 +120,11 @@ void ompl_interface::ModelBasedPlanningContext::configure(const ros::NodeHandle&
   complete_initial_robot_state_.update();
   ompl_simple_setup_->getStateSpace()->computeSignature(space_signature_);
   ompl_simple_setup_->getStateSpace()->setStateSamplerAllocator(
-      [this](const ompl::base::StateSpace* ss) { return allocPathConstrainedSampler(ss); });
+      [this](const ompl::base::StateSpace* ss) { return allocPathConstrainedSampler(ss); }); // To run the default planners
     // ompl_simple_setup_->getSpaceInformation()->setValidStateSamplerAllocator(
     //   [this](const ompl::base::SpaceInformation* si){ return allocGaussianSampler(si); });
     // ompl_simple_setup_->getSpaceInformation()->setValidStateSamplerAllocator(
-    //   [this](const ompl::base::SpaceInformation* si){ return allocValidGMMSampler(si); });
+    //   [this](const ompl::base::SpaceInformation* si){ return allocValidGMMSampler(si); }); // To run the GMM/GMR planners/samplers
 
   // convert the input state to the corresponding OMPL state
   ompl::base::ScopedState<> ompl_start_state(spec_.state_space_);
@@ -768,36 +768,110 @@ void ompl_interface::ModelBasedPlanningContext::postSolve()
   ROS_DEBUG_NAMED(LOGNAME, "There were %d valid motions and %d invalid motions.", v, iv);
 }
 
+// Modified this function to have the solution saved with nosimplify (phase 1), and then, compute the simplification time and save it in txt file (phase 2) for planner comparisons.
 bool ompl_interface::ModelBasedPlanningContext::solve(planning_interface::MotionPlanResponse& res)
 {
   res.error_code_ = solve(request_.allowed_planning_time, request_.num_planning_attempts);
+  
   if (res.error_code_.val == moveit_msgs::MoveItErrorCodes::SUCCESS)
   {
     double ptime = getLastPlanTime();
+
     if (simplify_solutions_)
     {
-      simplifySolution(request_.allowed_planning_time - ptime);
+      ROS_INFO("Simplifying Solution ...");
+      simplifySolution(1.0); //request_.allowed_planning_time - ptime);
       ptime += getLastSimplifyTime();
     }
+    else 
+      ROS_INFO("No Simplification ...");
 
-    if (interpolate_)
-      interpolateSolution();
+    ROS_INFO("Interpolation .. ");
+    if(interpolate_)
+      interpolateSolution();    
 
-    // fill the response
-    ROS_DEBUG_NAMED(LOGNAME, "%s: Returning successful solution with %lu states", getName().c_str(),
-                    getOMPLSimpleSetup()->getSolutionPath().getStateCount());
+    const int phases = 2;
+    for (int phase = 0; phase < phases; ++phase)
+    {
+      if (phase == 0)
+      {
+        ROS_INFO("phase 0: getSolutionPath()");
+        // fill the response
+        ROS_DEBUG_NAMED(LOGNAME, "%s: Returning successful solution with %lu states", getName().c_str(),
+                        getOMPLSimpleSetup()->getSolutionPath().getStateCount());
 
-    res.trajectory_ = std::make_shared<robot_trajectory::RobotTrajectory>(getRobotModel(), getGroupName());
-    getSolutionPath(*res.trajectory_);
-    res.planning_time_ = ptime;
+        res.trajectory_ = std::make_shared<robot_trajectory::RobotTrajectory>(getRobotModel(), getGroupName());
+        getSolutionPath(*res.trajectory_);
+        res.planning_time_ = ptime;
+      }
+      else if (phase == 1)
+      {
+        double post_simplify_timeout = 1.0;
+        ROS_INFO("phase 1: simplifySolution()");
+        simplifySolution(post_simplify_timeout);
+        
+        // This writes (appends) the simplification time in the 'simplify_times.txt' that is created in experiments_handler.py (saveExperiment())
+        std::string dir_name = "/home/zizo/Disassembly Teleop/2nd_paper_review/Rbolts/tpgmm-rrt/simulation/PRM/";
+        // std::string exp_dir = "/home/zizo/Disassembly Teleop/2nd_paper_review/Rbolts/tpgmm-rrt/simulation/GMM-RRT/nosimplify/";
+        
+        std::ofstream outfile;
+        outfile.open(dir_name + "simplify_times.txt", std::ios::app);
+        if (outfile.is_open()) {
+
+        outfile << "\n" << getLastSimplifyTime() << " --- ";
+
+        outfile.close();
+        } 
+        else {
+        std::cerr << "Unable to open file for appending.\n";
+        }
+
+        std::cout << "getLastSimplifyTime() = " << getLastSimplifyTime() << std::endl;
+        //\ This writes (appends) the simplification time in the 'simplify_times.txt' that is created in experiments_handler.py (saveExperiment())
+      }
+    }
+
     return true;
   }
+
   else
   {
     ROS_INFO_NAMED(LOGNAME, "Unable to solve the planning problem");
     return false;
   }
+
 }
+
+// bool ompl_interface::ModelBasedPlanningContext::solve(planning_interface::MotionPlanResponse& res)
+// {
+//   res.error_code_ = solve(request_.allowed_planning_time, request_.num_planning_attempts);
+//   if (res.error_code_.val == moveit_msgs::MoveItErrorCodes::SUCCESS)
+//   {
+//     double ptime = getLastPlanTime();
+//     if (simplify_solutions_)
+//     {
+//       simplifySolution(request_.allowed_planning_time - ptime);
+//       ptime += getLastSimplifyTime();
+//     }
+
+//     if (interpolate_)
+//       interpolateSolution();
+
+//     // fill the response
+//     ROS_DEBUG_NAMED(LOGNAME, "%s: Returning successful solution with %lu states", getName().c_str(),
+//                     getOMPLSimpleSetup()->getSolutionPath().getStateCount());
+
+//     res.trajectory_ = std::make_shared<robot_trajectory::RobotTrajectory>(getRobotModel(), getGroupName());
+//     getSolutionPath(*res.trajectory_);
+//     res.planning_time_ = ptime;
+//     return true;
+//   }
+//   else
+//   {
+//     ROS_INFO_NAMED(LOGNAME, "Unable to solve the planning problem");
+//     return false;
+//   }
+// }
 
 bool ompl_interface::ModelBasedPlanningContext::solve(planning_interface::MotionPlanDetailedResponse& res)
 {
