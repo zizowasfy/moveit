@@ -811,8 +811,8 @@ bool ompl_interface::ModelBasedPlanningContext::solve(planning_interface::Motion
         simplifySolution(post_simplify_timeout);
         
         // This writes (appends) the simplification time in the 'simplify_times.txt' that is created in experiments_handler.py (saveExperiment())
-        std::string dir_name = "/home/zizo/Disassembly Teleop/2nd_paper_review/Rbolts/tpgmm-rrt/simulation/PRM/";
-        // std::string exp_dir = "/home/zizo/Disassembly Teleop/2nd_paper_review/Rbolts/tpgmm-rrt/simulation/GMM-RRT/nosimplify/";
+        std::string PLANNER = "PRM";
+        std::string dir_name = "/home/zizo/Disassembly Teleop/2nd_paper_review/Rbolts/tpgmm-rrt/realworld/" + PLANNER + "/";
         
         std::ofstream outfile;
         outfile.open(dir_name + "simplify_times.txt", std::ios::app);
